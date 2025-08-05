@@ -924,6 +924,22 @@ if ( ! class_exists( 'WC_Facebookcommerce_EventsTracker' ) ) :
 					$contents[] = $content;
 				}
 			}
+
+			$order_cogs_validity = TRUE;
+			$order_cogs = 0;
+			foreach($product_ids as $product_id) {
+				$cogs = 0;
+				$product = wc_get_product( $product_id );
+				if ( 'simple' === $product->get_type() ) {
+					$cogs = $product->get_cogs_value();
+				}
+				if ( ! $cogs ) {
+					$order_cogs_validity = FALSE;
+					break;
+				}
+				$order_cogs += $cogs;
+			}
+
 			// Advanced matching information is extracted from the order
 			$event_data = array(
 				'event_name'  => $event_name,
@@ -938,6 +954,10 @@ if ( ! class_exists( 'WC_Facebookcommerce_EventsTracker' ) ) :
 				),
 				'user_data'   => $this->get_user_data_from_billing_address( $order ),
 			);
+
+			if ( $order_cogs_validity ) {
+				$event_data['custom_data']['net_revenue'] = $order_cogs;
+			}
 
 			$event = new Event( $event_data );
 
