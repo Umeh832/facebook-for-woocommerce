@@ -21,8 +21,12 @@ defined('ABSPATH') || exit;
 class CostOfGoods
 {
 
-    // If more than 1 COGS plugin was detected, on the Configuration page have the user select which one to use
-    // Enable / Disable COGS ???
+   /* TODO: Optimization & Test
+    1. cogs_providers should not be instantiated each time
+    2. Add unit tests for this class + provider classes
+    3. Add integration tests for value retrieval, breaking changes
+    4. Should we create a configuration page so users can choose?
+    */
 
     private static function get_supported_integrations() {
         return array(
