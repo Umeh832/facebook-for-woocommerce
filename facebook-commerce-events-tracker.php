@@ -12,6 +12,7 @@ use WooCommerce\Facebook\Events\Event;
 use WooCommerce\Facebook\Framework\Api\Exception as ApiException;
 use WooCommerce\Facebook\Framework\Helper;
 use WooCommerce\Facebook\Framework\Logger;
+use WooCommerce\Facebook\Integrations\CostOfGoods\CostOfGoods;
 
 if ( ! class_exists( 'WC_Facebookcommerce_EventsTracker' ) ) :
 
@@ -902,12 +903,14 @@ if ( ! class_exists( 'WC_Facebookcommerce_EventsTracker' ) ) :
 			$contents      = array();
 			$product_ids   = array( array() );
 			$product_names = array();
+			$products	   = array();
 
 			foreach ( $order->get_items() as $item ) {
 
 				$product = $item->get_product();
 
 				if ( $product ) {
+					$products[] = $product;
 					$product_ids[]   = \WC_Facebookcommerce_Utils::get_fb_content_ids( $product );
 					$product_names[] = \WC_Facebookcommerce_Utils::clean_string( $product->get_title() );
 
@@ -925,21 +928,6 @@ if ( ! class_exists( 'WC_Facebookcommerce_EventsTracker' ) ) :
 				}
 			}
 
-			$order_cogs_validity = TRUE;
-			$order_cogs = 0;
-			foreach($product_ids as $product_id) {
-				$cogs = 0;
-				$product = wc_get_product( $product_id );
-				if ( 'simple' === $product->get_type() ) {
-					$cogs = $product->get_cogs_value();
-				}
-				if ( ! $cogs ) {
-					$order_cogs_validity = FALSE;
-					break;
-				}
-				$order_cogs += $cogs;
-			}
-
 			// Advanced matching information is extracted from the order
 			$event_data = array(
 				'event_name'  => $event_name,
@@ -955,8 +943,10 @@ if ( ! class_exists( 'WC_Facebookcommerce_EventsTracker' ) ) :
 				'user_data'   => $this->get_user_data_from_billing_address( $order ),
 			);
 
-			if ( $order_cogs_validity ) {
-				$event_data['custom_data']['net_revenue'] = $order_cogs;
+			$cogs = CostOfGoods::calculate_cogs_for_products( $products );
+			
+			if ( FALSE !== $cogs ) {
+				$event_data['custom_data']['net_revenue'] = $cogs;
 			}
 
 			$event = new Event( $event_data );
