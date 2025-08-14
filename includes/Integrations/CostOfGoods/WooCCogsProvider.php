@@ -41,7 +41,7 @@ class WooCCogsProvider extends AbstractCogsProvider
 
     public static function is_available() {
 
-        if ( !\WC_Facebookcommerce_Utils::is_woocommerce_integration() || ! class_exists( 'WC_Product' ) ) {
+        if ( ! \WC_Facebookcommerce_Utils::is_woocommerce_integration() || ! class_exists( 'WC_Product' ) ) {
             return false;
         }
         $reflection = new ReflectionClass( "WC_Product" );
@@ -50,7 +50,7 @@ class WooCCogsProvider extends AbstractCogsProvider
         if ( ! method_exists( $instance, "get_cogs_total_value" ) ) {
             return false;
         }
-
+        // Double check if this is absolutely necessary ( Disable COGS on WooC and see if get_cogs_total_value still exists )
         return function_exists( 'get_option ') && ( 'yes' === get_option( 'woocommerce_feature_cost_of_goods_sold_enabled' ) );
     }  
 }
