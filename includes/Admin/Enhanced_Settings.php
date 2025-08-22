@@ -83,6 +83,7 @@ class Enhanced_Settings {
 					Settings_Screens\Shops::ID        => new Settings_Screens\Shops(),
 					Settings_Screens\Product_Sets::ID => new Settings_Screens\Product_Sets(),
 					Settings_Screens\Product_Attributes::ID => new Settings_Screens\Product_Attributes(),
+					Settings_Screens\Localization_Integrations::ID => new Settings_Screens\Localization_Integrations(),
 				);
 			} else {
 				/**
@@ -93,6 +94,7 @@ class Enhanced_Settings {
 					Settings_Screens\Product_Sync::ID => new Settings_Screens\Product_Sync(),
 					Settings_Screens\Product_Sets::ID => new Settings_Screens\Product_Sets(),
 					Settings_Screens\Product_Attributes::ID => new Settings_Screens\Product_Attributes(),
+					Settings_Screens\Localization_Integrations::ID => new Settings_Screens\Localization_Integrations(),
 				);
 			}
 		} else {
