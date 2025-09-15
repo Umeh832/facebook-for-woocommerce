@@ -10,6 +10,8 @@
 
 namespace WooCommerce\Facebook\Products;
 
+use WooCommerce\Facebook\Framework\Logger;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -56,6 +58,9 @@ class Sync {
 		// stock update actions
 		add_action( 'woocommerce_product_set_stock', array( $this, 'handle_stock_update' ) );
 		add_action( 'woocommerce_variation_set_stock', array( $this, 'handle_stock_update' ) );
+
+		// product import handling
+		add_action( 'woocommerce_product_import_inserted_product_object', array( $this, 'handle_product_import_update' ), 10, 2 );
 	}
 
 
@@ -152,7 +157,7 @@ class Sync {
 	/**
 	 * Adds the products with stock changes to the requests array to be updated.
 	 *
-	 * @since 2.1.0
+	 * @since 3.5.8
 	 *
 	 * @param \WC_Product $product product object
 	 */
@@ -168,10 +173,48 @@ class Sync {
 			return;
 		}
 
-		// add the product to the list of products to be updated
-		$this->create_or_update_products( array( $product->get_id() ) );
+		try {
+			// handle variable products - sync children only, not the parent
+			if ( $product->is_type( 'variable' ) ) {
+				$variation_ids = $product->get_children();
+				if ( ! empty( $variation_ids ) ) {
+					$this->create_or_update_products( $variation_ids );
+				}
+			} else {
+				// add the product to the list of products to be updated
+				$this->create_or_update_products( array( $product->get_id() ) );
+			}
+		} catch ( Exception $e ) {
+			// Silently handle any sync errors - Facebook sync should not break stock updates.
+			unset( $e ); // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+		}
 	}
 
+
+	/**
+	 * Handles product imports from WooCommerce import functionality.
+	 *
+	 * @since 3.5.8
+	 *
+	 * @param \WC_Product $product The product object that was imported
+	 * @param array       $data    The import data
+	 */
+	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function handle_product_import_update( $product, $data ) {
+
+		// bail if not connected
+		if ( ! facebook_for_woocommerce()->get_connection_handler()->is_connected() ) {
+			return;
+		}
+
+		// Process ALL products (both new and updates) during import
+		try {
+			facebook_for_woocommerce()->get_product_sync_validator( $product )->validate();
+			$this->create_or_update_products( array( $product->get_id() ) );
+		} catch ( \Exception $e ) {
+			return;
+		}
+	}
 
 	/**
 	 * Creates a background job to sync the products in the requests array.
