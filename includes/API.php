@@ -355,6 +355,7 @@ class API extends Base {
 		return $this->perform_request( $request );
 	}
 
+
 	/**
 	 * Creates Facebook Product Group.
 	 *
